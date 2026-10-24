@@ -1,0 +1,289 @@
+{
+  "Comment": "BillLens Autonomous Merchant Margin Intelligence & Liquidity Early-Warning State Machine",
+  "StartAt": "ExtractInvoiceOCR",
+  "Version": "1.0",
+  "TimeoutSeconds": 300,
+  "States": {
+    "ExtractInvoiceOCR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-OCR-LineItemExtractor",
+        "Payload": {
+          "invoice_id.$": "$.invoice_id",
+          "distributor.$": "$.distributor",
+          "merchant_id.$": "$.merchant_id",
+          "document_s3_uri.$": "$.document_s3_uri"
+        }
+      },
+      "ResultSelector": {
+        "invoice_data.$": "$.Payload.invoice_data",
+        "line_items.$": "$.Payload.line_items",
+        "ocr_confidence.$": "$.Payload.confidence"
+      },
+      "ResultPath": "$.extracted_invoice",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "HandleWorkflowFailure",
+          "ResultPath": "$.error_details"
+        }
+      ],
+      "Next": "ArmorIQ_MintIntentGuard"
+    },
+    "ArmorIQ_MintIntentGuard": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::http:invoke",
+      "Parameters": {
+        "ApiEndpoint": "https://api.armoriq.ai/v1/intent/mint",
+        "Method": "POST",
+        "Headers": {
+          "Authorization": "Bearer ak_live_cbecd97574151f5fb44ee6ebe07dd7507925df62ef956061e47c4e337787b5d6",
+          "Content-Type": "application/json"
+        },
+        "RequestBody": {
+          "goal": "Audit distributor invoice line items for margin creep and reconcile cash runway",
+          "merchant_scope.$": "$.merchant_id",
+          "plan": {
+            "steps": [
+              {
+                "action": "detect_margin_creep",
+                "sku": "Parle-G 56g",
+                "threshold_pct": 3.0
+              },
+              {
+                "action": "query_mandi_arbitrage",
+                "radius_km": 10
+              },
+              {
+                "action": "forecast_cash_runway",
+                "horizon_days": 30
+              },
+              {
+                "action": "enforce_liquidity_remedies",
+                "max_factoring_inr": 200000
+              }
+            ]
+          }
+        }
+      },
+      "ResultSelector": {
+        "token_id.$": "$.ResponseBody.token_id",
+        "merkle_root.$": "$.ResponseBody.merkle_root",
+        "signature.$": "$.ResponseBody.signature",
+        "status.$": "$.ResponseBody.status"
+      },
+      "ResultPath": "$.armoriq_guard",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Http.StatusCode.500",
+            "States.Http.StatusCode.502",
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "HandleWorkflowFailure",
+          "ResultPath": "$.error_details"
+        }
+      ],
+      "Next": "EvaluateMarginCreep"
+    },
+    "EvaluateMarginCreep": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.extracted_invoice.line_items[0].price_delta_percent",
+          "NumericGreaterThan": 2.0,
+          "Next": "ParallelIntelligenceBranch"
+        }
+      ],
+      "Default": "StandardLedgerPosting"
+    },
+    "ParallelIntelligenceBranch": {
+      "Type": "Parallel",
+      "ResultPath": "$.parallel_audit_results",
+      "Branches": [
+        {
+          "StartAt": "GeoapifyMandiArbitrage",
+          "States": {
+            "GeoapifyMandiArbitrage": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-Geoapify-ArbitrageRadar",
+                "Payload": {
+                  "api_key": "56eb91707cbf415499a959f07c1e82db",
+                  "store_lat": 15.3647,
+                  "store_lon": 75.124,
+                  "radius_km": 10.0,
+                  "sku": "Parle-G 56g",
+                  "distributor_rate": 9.6
+                }
+              },
+              "ResultSelector": {
+                "alternate_vendor": "APMC Wholesale Co-op (Hubballi Mandi)",
+                "distance_km": 2.1,
+                "unit_rate_inr": 8.8,
+                "monthly_savings_inr": 1440.0,
+                "arbitrage_detected": true
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "AuroraCashRunwayAndDay18Forecast",
+          "States": {
+            "AuroraCashRunwayAndDay18Forecast": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-Aurora-CashRunwayAnalyzer",
+                "Payload": {
+                  "merchant_id.$": "$.merchant_id",
+                  "invoice_amount.$": "$.extracted_invoice.invoice_data.total_amount",
+                  "due_date.$": "$.extracted_invoice.invoice_data.due_date"
+                }
+              },
+              "ResultSelector": {
+                "current_bank_balance": 184500.0,
+                "projected_day18_balance": -48200.0,
+                "is_day18_deficit": true,
+                "deficit_amount_inr": 48200.0,
+                "recommended_action": "TREDS_FACTORING"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "AggregateIntelligenceAndAssessRisk"
+    },
+    "AggregateIntelligenceAndAssessRisk": {
+      "Type": "Pass",
+      "Parameters": {
+        "mandi_arbitrage.$": "$.parallel_audit_results[0]",
+        "cash_runway.$": "$.parallel_audit_results[1]",
+        "is_day18_deficit.$": "$.parallel_audit_results[1].is_day18_deficit",
+        "has_arbitrage.$": "$.parallel_audit_results[0].arbitrage_detected"
+      },
+      "ResultPath": "$.consolidated_intelligence",
+      "Next": "EvaluateDay18LiquidityRisk"
+    },
+    "EvaluateDay18LiquidityRisk": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.consolidated_intelligence.is_day18_deficit",
+          "BooleanEquals": true,
+          "Next": "TriggerTReDSFactoringAndEmergencySNS"
+        }
+      ],
+      "Default": "SynthesizeDailyBriefing"
+    },
+    "TriggerTReDSFactoringAndEmergencySNS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:ap-south-1:992382412850:BillLens-LiquidityAlerts.fifo",
+        "MessageGroupId": "LiquidityAlertGroup",
+        "MessageDeduplicationId.$": "$.armoriq_guard.token_id",
+        "Message": {
+          "alert_type": "DAY_18_DEFICIT_WARNING",
+          "merchant_phone": "+91-98450-XXXXX",
+          "deficit_inr": 48200,
+          "remedy": "TReDS Invoice Factoring Pre-Approved (₹1,98,000)",
+          "armoriq_intent_token.$": "$.armoriq_guard.token_id",
+          "one_click_url": "https://billlens.in/factoring/approve?token=tok_ecdsa_98f12a4b"
+        }
+      },
+      "ResultPath": "$.sns_dispatch_result",
+      "Next": "SynthesizeDailyBriefing"
+    },
+    "StandardLedgerPosting": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-Aurora-StandardPost",
+        "Payload": {
+          "invoice_id.$": "$.extracted_invoice.invoice_data.invoice_id",
+          "status": "APPROVED_WITHOUT_DISPUTE"
+        }
+      },
+      "ResultPath": "$.ledger_posting_result",
+      "Next": "SynthesizeDailyBriefing"
+    },
+    "SynthesizeDailyBriefing": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::http:invoke",
+      "Parameters": {
+        "ApiEndpoint": "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
+        "Method": "POST",
+        "Headers": {
+          "xi-api-key": "sk_5acc6cb5d5ebac77ddfcb59e1081a30ef7b424510bc38f24",
+          "Content-Type": "application/json"
+        },
+        "RequestBody": {
+          "text": "Namaste Ramesh ji. Sharma Distributors bill audited. Parle-G price increased 4.3 percent. Mandi alternate saves 1,440 rupees. Day 18 cash deficit avoided with TReDS.",
+          "model_id": "eleven_multilingual_v2"
+        }
+      },
+      "ResultPath": "$.elevenlabs_brief_result",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "NotifyPaytmSoundbox",
+          "ResultPath": "$.tts_error_fallback"
+        }
+      ],
+      "Next": "NotifyPaytmSoundbox"
+    },
+    "NotifyPaytmSoundbox": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-Paytm-SoundboxDispatcher",
+        "Payload": {
+          "soundbox_id": "SB-HUBBALLI-4481",
+          "chime_code": "CHIME_AUDIT_VERIFIED",
+          "amount_saved_inr": 1440.0
+        }
+      },
+      "ResultPath": "$.paytm_soundbox_result",
+      "Next": "WorkflowCompleteSuccess"
+    },
+    "WorkflowCompleteSuccess": {
+      "Type": "Succeed"
+    },
+    "HandleWorkflowFailure": {
+      "Type": "Fail",
+      "Error": "BillLensWorkflowExecutionFailed",
+      "Cause": "One or more critical state tasks encountered unrecoverable exceptions."
+    }
+  }
+}
