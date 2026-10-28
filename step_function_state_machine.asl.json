@@ -52,7 +52,7 @@
         "ApiEndpoint": "https://api.armoriq.ai/v1/intent/mint",
         "Method": "POST",
         "Headers": {
-          "Authorization": "Bearer ak_live_cbecd97574151f5fb44ee6ebe07dd7507925df62ef956061e47c4e337787b5d6",
+          "Authorization": "Bearer {{resolve:secretsmanager:BillLens/ArmorIQ:SecretString:api_key}}",
           "Content-Type": "application/json"
         },
         "RequestBody": {
@@ -135,7 +135,7 @@
               "Parameters": {
                 "FunctionName": "arn:aws:lambda:ap-south-1:992382412850:function:BillLens-Geoapify-ArbitrageRadar",
                 "Payload": {
-                  "api_key": "56eb91707cbf415499a959f07c1e82db",
+                  "api_key": "{{resolve:secretsmanager:BillLens/Geoapify:SecretString:api_key}}",
                   "store_lat": 15.3647,
                   "store_lon": 75.124,
                   "radius_km": 10.0,
@@ -243,7 +243,7 @@
         "ApiEndpoint": "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
         "Method": "POST",
         "Headers": {
-          "xi-api-key": "sk_5acc6cb5d5ebac77ddfcb59e1081a30ef7b424510bc38f24",
+          "xi-api-key": "{{resolve:secretsmanager:BillLens/ElevenLabs:SecretString:api_key}}",
           "Content-Type": "application/json"
         },
         "RequestBody": {

@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BillLens — Merchant Margin & Cash-Flow Intelligence</title>
+  <meta name="description" content="BillLens — Autonomous MSME Cash-Flow & Underwriting Intelligence platform. Margin leak detection, 30-day runway projection, and cryptographic intent verification.">
+  <meta name="author" content="Prem T H">
+  <meta property="og:title" content="BillLens — Autonomous MSME Margin & Cash-Flow Intelligence">
+  <meta property="og:description" content="AI-powered cash-flow early warning & autonomous underwriting platform for MSMEs. Maintained by Prem T H.">
+  <meta property="og:url" content="https://github.com/Prem17th/BillLens">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BillLens — Autonomous MSME Margin & Cash-Flow Intelligence">
+  <meta name="twitter:description" content="AI-powered cash-flow early warning & autonomous underwriting platform for MSMEs. Maintained by Prem T H.">
   
   <!-- Inter & Plus Jakarta Sans typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1327,6 +1336,12 @@
           <span>Run AI Audit</span>
         </button>
 
+        <!-- GITHUB MAINTAINER REPO LINK -->
+        <a href="https://github.com/Prem17th/BillLens" target="_blank" rel="noopener noreferrer" class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition text-xs font-semibold text-slate-700 shadow-2xs" title="GitHub Repository · Maintained by Prem T H">
+          <i class="fa-brands fa-github text-sm text-slate-900"></i>
+          <span>Prem17th/BillLens</span>
+        </a>
+
       </div>
     </div>
   </header>
@@ -1535,6 +1550,15 @@
           <span class="nav-badge text-[10px] font-mono px-1.5 py-0.5 rounded bg-pink-50 text-pink-700 border border-pink-200/70 font-semibold flex-shrink-0">Orchestrator</span>
         </button>
       </nav>
+
+      <!-- Maintainer Attribution Pill -->
+      <div class="px-2 py-1 flex items-center justify-between text-[11px] text-slate-500 border-t border-fintech-200/60 pt-2">
+        <a href="https://github.com/Prem17th/BillLens" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-600 transition flex items-center gap-1.5 font-medium truncate">
+          <i class="fa-brands fa-github text-xs"></i>
+          <span class="truncate">Prem T H / BillLens</span>
+        </a>
+        <span class="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold">v1.1</span>
+      </div>
 
       <!-- Merchant Financial Health Summary Card in Sidebar -->
       <div class="sidebar-health-card bg-white border border-fintech-200/90 rounded-xl p-3 shadow-card transition-all">
@@ -3801,6 +3825,25 @@ Working capital is locked in delayed trade receivables (₹3,42,800)—represent
 
       </section>
 
+      <!-- INSTITUTIONAL PLATFORM FOOTER -->
+      <footer class="mt-8 pt-6 pb-8 border-t border-slate-200/80 text-xs text-slate-500 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-slate-900 tracking-tight">BillLens</span>
+          <span class="text-slate-400">·</span>
+          <span>Autonomous MSME Cash-Flow & Underwriting Intelligence</span>
+          <span class="text-slate-400">·</span>
+          <span>Maintained by <a href="https://github.com/Prem17th" target="_blank" rel="noopener noreferrer" class="font-semibold text-emerald-600 hover:underline">Prem T H</a></span>
+        </div>
+        <div class="flex items-center gap-4 text-[11px]">
+          <a href="https://github.com/Prem17th/BillLens" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-600 transition flex items-center gap-1.5 font-medium">
+            <i class="fa-brands fa-github text-sm"></i>
+            <span>GitHub Repository</span>
+          </a>
+          <span class="text-slate-300">|</span>
+          <span class="text-slate-400">AWS Step Functions · ArmorIQ SDK · Aurora Serverless</span>
+        </div>
+      </footer>
+
     <!-- SLIDING SLIDE-OVER DETAIL DRAWER -->
   <div id="slideOverDrawerBackdrop" class="hidden fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm transition-opacity" onclick="closeSlideOverDrawer()"></div>
   <aside id="slideOverDrawer" class="hidden fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white border-l border-fintech-200 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto drawer-active">
@@ -3862,7 +3905,7 @@ Working capital is locked in delayed trade receivables (₹3,42,800)—represent
         </div>
         <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
           <span class="text-slate-400 text-[10px] uppercase font-mono block">Active API Key</span>
-          <span class="font-mono text-slate-200">ak_live_cbecd9...7787b5d6</span>
+          <span class="font-mono text-slate-200">Intent Token Shield Active</span>
         </div>
         <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
           <span class="text-slate-400 text-[10px] uppercase font-mono block">Enforcement Mode</span>
@@ -3909,11 +3952,11 @@ Working capital is locked in delayed trade receivables (₹3,42,800)—represent
 
   <!-- JAVASCRIPT: LOGIC & APIS -->
   <script>
-    const OPENAI_KEY = window.OPENAI_KEY || atob('c2stcHJvai0xcEhJVmphRS1MRkxfZGNPSkNjTG5NT0lqRERfeWxzQTRKUzBCdUU3MFlmY2J6SmRSMWhYaUNWeEc3azBndnhIZHRoc1E2dnEyN1QzQmxia0ZKYWJ3dGpZYi0tOC1PV1NKYWRqNWhvUjhma25UVm0wMjFDU0x2dGFldHQtMGs3U3h4UWZfZGEzMFNscXJKdlR0UVlXYkYzNFk5QUE=');
-    const GEMINI_KEY = window.GEMINI_KEY || atob('QVEuQWI4Uk42SWJQNXVGQXVmbXAzbG5mZ1VWTUIwTXQ2VGQ0S0dJUFNBeXRiOEdsZzVtSWc=');
-    const ELEVENLABS_KEY = window.ELEVENLABS_KEY || atob('c2tfNWFjYzZjYjVkNWViYWM3N2RkZmNiNTllMTA4MWEzMGVmN2I0MjQ1MTBiYzM4ZjI0');
-    const ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam (multilingual ready)
-    const GEOAPIFY_KEY = '56eb91707cbf415499a959f07c1e82db';
+    const OPENAI_KEY = window.OPENAI_KEY || (typeof localStorage !== 'undefined' ? (localStorage.getItem('OPENAI_API_KEY') || '') : '') || '';
+    const GEMINI_KEY = window.GEMINI_KEY || (typeof localStorage !== 'undefined' ? (localStorage.getItem('GEMINI_API_KEY') || '') : '') || '';
+    const ELEVENLABS_KEY = window.ELEVENLABS_KEY || (typeof localStorage !== 'undefined' ? (localStorage.getItem('ELEVENLABS_API_KEY') || '') : '') || '';
+    const ELEVENLABS_VOICE_ID = window.ELEVENLABS_VOICE_ID || 'pNInz6obpgDQGcFmaJgB'; // Adam (multilingual ready)
+    const GEOAPIFY_KEY = window.GEOAPIFY_KEY || (typeof localStorage !== 'undefined' ? (localStorage.getItem('GEOAPIFY_API_KEY') || '') : '') || '';
     
     let activeAiProvider = 'openai'; // Defaults to OpenAI GPT-4o-mini!
     let currentVoiceLang = 'hindi';
@@ -4519,6 +4562,9 @@ Keep it punchy, professional, and under 160 words.`;
         let reply = null;
 
         if (activeAiProvider === 'openai') {
+          if (!OPENAI_KEY) {
+            throw new Error("OpenAI API key not provided; operating in verified fallback mode");
+          }
           // Live OpenAI Call
           const res = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -4544,6 +4590,9 @@ Keep it punchy, professional, and under 160 words.`;
             throw new Error(`OpenAI HTTP ${res.status}`);
           }
         } else {
+          if (!GEMINI_KEY) {
+            throw new Error("Gemini API key not provided; operating in verified fallback mode");
+          }
           // Live Gemini Call
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${GEMINI_KEY}`, {
             method: 'POST',
@@ -5098,6 +5147,11 @@ Distributor purchase price creep (+4.3% on Parle-G) was not passed on to retail 
     }
 
     async function synthesizeLiveElevenLabs() {
+      if (!ELEVENLABS_KEY) {
+        showToast("Playing verified studio master audio brief...", "info");
+        toggleVoiceAudio();
+        return;
+      }
       const text = voiceTranscripts[currentVoiceLang].text;
       showToast("Synthesizing live audio via ElevenLabs API...", "info");
       const playIcon = document.getElementById('voicePlayIcon');
@@ -5142,6 +5196,10 @@ Distributor purchase price creep (+4.3% on Parle-G) was not passed on to retail 
     }
 
     function speakSnsAlert() {
+      if (!ELEVENLABS_KEY) {
+        toggleVoiceAudio();
+        return;
+      }
       showToast("Dispatching Voice Call simulation via ElevenLabs...", "info");
       const data = snsTriggers[currentSnsTrigger];
       if (voiceAudioObj) voiceAudioObj.pause();
@@ -5160,6 +5218,10 @@ Distributor purchase price creep (+4.3% on Parle-G) was not passed on to retail 
     }
 
     function playPaytmSoundboxAlert() {
+      if (!ELEVENLABS_KEY) {
+        toggleVoiceAudio();
+        return;
+      }
       showToast("Simulating Paytm Soundbox margin announcement...", "info");
       const text = "Paytm BillLens Soundbox Alert: Sharma Distributors ke bill par Parle-G ka purchase rate 40 paise badh gaya hai. Kirana margin ghat gaya hai.";
       fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
@@ -5342,11 +5404,15 @@ Distributor purchase price creep (+4.3% on Parle-G) was not passed on to retail 
           attributionControl: true
         }).setView([12.9716, 77.5946], 12);
 
-        // Geoapify Tile Layer
-        const tileUrl = `https://maps.geoapify.com/v1/tile/osm-bright-smooth/{z}/{x}/{y}.png?apiKey=${GEOAPIFY_KEY}`;
+        // Tile Layer with graceful OpenStreetMap fallback
+        const tileUrl = GEOAPIFY_KEY
+          ? `https://maps.geoapify.com/v1/tile/osm-bright-smooth/{z}/{x}/{y}.png?apiKey=${GEOAPIFY_KEY}`
+          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
         L.tileLayer(tileUrl, {
           maxZoom: 19,
-          attribution: 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | © OpenStreetMap contributors'
+          attribution: GEOAPIFY_KEY 
+            ? 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | © OpenStreetMap contributors'
+            : '© OpenStreetMap contributors'
         }).addTo(geoapifyMapInstance);
 
         // 8km Geofence Circle around Indiranagar Base Store

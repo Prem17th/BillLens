@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-BillLens Fintech Prototype — Backend Server with ArmorIQ SDK & AWS Step Functions Integration
+BillLens Fintech Platform — Backend Server with ArmorIQ SDK & AWS Step Functions Integration
+Maintained by Prem T H (https://github.com/Prem17th/BillLens)
 Port: 8080
 Provides:
   - Static file serving (HTML, JS, CSS, MP3 assets)
-  - Live ArmorIQ SDK integration (API key: ak_live_cbecd97574151f5fb44ee6ebe07dd7507925df62ef956061e47c4e337787b5d6)
+  - ArmorIQ Agent Security SDK integration & cryptographic intent verification
   - AWS Step Functions Orchestration Engine (ASL State Machine)
   - Endpoints:
+      GET  /api/health
       GET  /api/armoriq/status
       POST /api/armoriq/verify-plan
       POST /api/armoriq/enforce-action
@@ -23,9 +25,39 @@ import json
 import time
 import uuid
 import copy
+import hashlib
+import hmac
 import mimetypes
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+
+# Ensure common MIME types are registered
+mimetypes.add_type("audio/mpeg", ".mp3")
+mimetypes.add_type("application/json", ".json")
+mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
+DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+def load_env_file():
+    """Loads key-value pairs from a local .env file without external dependencies."""
+    env_path = os.path.join(DIRECTORY, ".env")
+    if os.path.isfile(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip()
+                        if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
+                            v = v[1:-1]
+                        if k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+load_env_file()
 
 # Import ArmorIQ SDK
 try:
@@ -33,23 +65,25 @@ try:
     ARMORIQ_AVAILABLE = True
 except ImportError:
     ARMORIQ_AVAILABLE = False
-    print("Warning: armoriq_sdk not installed. Fallback mode enabled.")
+    print("Notice: armoriq_sdk not installed. Fallback mode enabled.")
 
-ARMORIQ_API_KEY = "ak_live_cbecd97574151f5fb44ee6ebe07dd7507925df62ef956061e47c4e337787b5d6"
+ARMORIQ_API_KEY = os.environ.get("ARMORIQ_API_KEY", "").strip()
 PORT = int(os.environ.get("PORT", 8080))
-DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 STATE_MACHINE_ARN = "arn:aws:states:ap-south-1:992382412850:stateMachine:BillLensInvoiceAuditOrchestrator"
 
 # Initialize ArmorIQ Client
 armoriq_client = None
-if ARMORIQ_AVAILABLE:
+if ARMORIQ_AVAILABLE and ARMORIQ_API_KEY:
     try:
         armoriq_client = ArmorIQClient(api_key=ARMORIQ_API_KEY)
-        print(f"[ArmorIQ] Initialized client with API key: {ARMORIQ_API_KEY[:10]}...{ARMORIQ_API_KEY[-6:]}")
+        masked_key = f"{ARMORIQ_API_KEY[:6]}...{ARMORIQ_API_KEY[-4:]}"
+        print(f"[ArmorIQ] Initialized client with API key: {masked_key}")
         print(f"[ArmorIQ] Control plane: {armoriq_client.backend_endpoint}")
     except Exception as e:
-        print(f"[ArmorIQ] Init warning: {e}")
+        print(f"[ArmorIQ] Init warning (fallback active): {e}")
+elif not ARMORIQ_API_KEY:
+    print("[ArmorIQ] No ARMORIQ_API_KEY configured. Running in robust local cryptographic fallback mode.")
 
 # In-memory audit trail of signed intent tokens
 recent_intent_tokens = []
@@ -471,7 +505,9 @@ class BillLensHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        if path == "/api/armoriq/status":
+        if path == "/api/health":
+            self.send_json({"status": "ok", "app": "BillLens", "version": "1.1.0", "maintainer": "Prem T H"})
+        elif path == "/api/armoriq/status":
             self.handle_armoriq_status()
         elif path == "/api/armoriq/audit-log":
             self.handle_armoriq_audit_log()
@@ -525,7 +561,7 @@ class BillLensHandler(SimpleHTTPRequestHandler):
         status_payload = {
             "service": "ArmorIQ Agent Security SDK",
             "status": "connected" if is_ready else "error",
-            "api_key_masked": f"{ARMORIQ_API_KEY[:8]}...{ARMORIQ_API_KEY[-6:]}",
+            "api_key_masked": f"{ARMORIQ_API_KEY[:6]}...{ARMORIQ_API_KEY[-4:]}" if ARMORIQ_API_KEY else "Not configured (cryptographic fallback mode)",
             "control_plane": armoriq_client.backend_endpoint if is_ready else "https://api.armoriq.ai",
             "iap_endpoint": armoriq_client.iap_endpoint if is_ready else "https://iap.armoriq.ai",
             "sdk_version": "0.6.2",
@@ -588,7 +624,8 @@ class BillLensHandler(SimpleHTTPRequestHandler):
             plan_hash = "0x" + hashlib.sha256(plan_str.encode("utf-8")).hexdigest()
             token_id = "tok_live_" + uuid.uuid4().hex[:24]
             plan_id = "plan_" + uuid.uuid4().hex[:16]
-            sig = "0x" + hmac.new(ARMORIQ_API_KEY.encode("utf-8"), plan_hash.encode("utf-8"), hashlib.sha256).hexdigest() + "1c"
+            secret = ARMORIQ_API_KEY if ARMORIQ_API_KEY else "billlens-cryptographic-salt"
+            sig = "0x" + hmac.new(secret.encode("utf-8"), plan_hash.encode("utf-8"), hashlib.sha256).hexdigest() + "1c"
             now = time.time()
             token_record = {
                 "token_id": token_id,
@@ -729,11 +766,12 @@ def run():
     os.chdir(DIRECTORY)
     server_address = ("", PORT)
     httpd = ThreadingHTTPServer(server_address, BillLensHandler)
+    masked_key = f"{ARMORIQ_API_KEY[:6]}...{ARMORIQ_API_KEY[-4:]}" if ARMORIQ_API_KEY else "(cryptographic fallback active)"
     print("============================================================")
-    print("BillLens Prototype Server with ArmorIQ & AWS Step Functions")
-    print(f"   Listening on: http://localhost:{PORT}")
-    print(f"   Serving Dir:  {DIRECTORY}")
-    print(f"   ArmorIQ API:  {ARMORIQ_API_KEY[:8]}...{ARMORIQ_API_KEY[-6:]}")
+    print("BillLens Fintech Platform — Maintained by Prem T H")
+    print(f"   Listening on:   http://localhost:{PORT}")
+    print(f"   Serving Dir:    {DIRECTORY}")
+    print(f"   ArmorIQ Mode:   {masked_key}")
     print(f"   Step Functions: {STATE_MACHINE_ARN}")
     print("============================================================")
     try:

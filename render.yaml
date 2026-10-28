@@ -1,8 +1,13 @@
 services:
   - type: web
-    name: billlens-impulse26
+    name: billlens
     runtime: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python server.py"
     plan: free
     autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ARMORIQ_API_KEY
+        sync: false

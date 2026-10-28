@@ -3,3 +3,4 @@ armoriq_sdk>=0.6.0
 httpx>=0.24.0
 pydantic>=2.0.0
 cryptography>=41.0.0
+pytest>=8.0.0
